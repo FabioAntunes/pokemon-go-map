@@ -30,15 +30,32 @@
           zoom: 16
         });
 
-        var marker = new google.maps.Marker({
+
+        var user = new google.maps.Marker({
           position: myLatLng,
           map: map,
           title: 'Me!'
         });
 
+        map.addListener('click', function(event) {
+          user.setPosition(event.latLng);
+          socket.emit('Position', {
+            type: 'coords',
+            coords: {
+              latitude: event.latLng.lat(),
+              longitude: event.latLng.lng(),
+              altitude: 0
+            }
+          }, function(err, coords) {
+            console.log('Error', err);
+            console.log('Coords', coords);
+          })
+        });
+
         socket.on('Pokemon', function (pokemon) {
           var marker;
           if(!pokemons[pokemon.position.Latitude + '' + pokemon.position.Longitude]){
+            console.log(pokemon);
             marker = new google.maps.Marker({
               position: {lat: pokemon.position.Latitude, lng: pokemon.position.Longitude},
               map: map,

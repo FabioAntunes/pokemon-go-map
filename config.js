@@ -8,8 +8,8 @@ module.exports = {
   location: {
     type: 'coords',
     coords: {
-      latitude: 51.508565,
-      longitude: -0.048844,
+      latitude: 51.509410,
+      longitude: -0.0513012,
       altitude: 0
     }
   }
