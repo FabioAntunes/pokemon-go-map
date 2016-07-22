@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <meta name="viewport" content="initial-scale=1.0">
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      var map;
+      var socket;
+      var pokemons = {};
+      function initMap() {
+        socket = io('http://localhost:8903');
+        var myLatLng = {lat: 51.508772, lng: -0.047605};
+        map = new google.maps.Map(document.getElementById('map'), {
+          center: myLatLng,
+          zoom: 16
+        });
+
+        var marker = new google.maps.Marker({
+          position: myLatLng,
+          map: map,
+          title: 'Me!'
+        });
+
+        socket.on('Pokemon', function (pokemon) {
+          var marker;
+          console.log(pokemon);
+          if(!pokemon[pokemon.position.Latitude + '' + pokemon.position.Longitude]){
+            marker = new google.maps.Marker({
+              position: {lat: pokemon.position.Latitude, lng: pokemon.position.Longitude},
+              map: map,
+              title: pokemon.name,
+              icon: pokemon.img
+            });
+
+            marker.addListener('click', function() {
+              console.log('Catchiiing');
+              socket.emit('Catch', pokemon.position, function(err, status){
+                if(err){
+                  console.log(err);
+                  return;
+                }
+                console.log('status', status);
+                if(status.code !== 4 || status.code !== 2){
+                  delete pokemon[pokemon.position.Latitude + '' + pokemon.position.Longitude];
+                  map.removeOverlay(marker);
+                }
+              });
+            });
+            pokemon[pokemon.position.Latitude + '' + pokemon.position.Longitude] = true;
+          }
+        });
+      }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBWazNGb6jPK8BrPQYnGuSN_Ck6TZEHaOU&callback=initMap"
+    async defer></script>
+  </body>
+</html>

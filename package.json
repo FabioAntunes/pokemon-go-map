@@ -1,0 +1,17 @@
+{
+  "name": "gomap",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^2.0.0",
+    "pokemon-go-node-api": "git+https://github.com/d-pollard/Pokemon-GO-node-api.git#1cd5c73dc111ead4e3aa412d99b4559ab529b355",
+    "socket.io": "^1.4.8"
+  }
+}
