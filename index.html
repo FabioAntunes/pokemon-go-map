@@ -38,8 +38,7 @@
 
         socket.on('Pokemon', function (pokemon) {
           var marker;
-          console.log(pokemon);
-          if(!pokemon[pokemon.position.Latitude + '' + pokemon.position.Longitude]){
+          if(!pokemons[pokemon.position.Latitude + '' + pokemon.position.Longitude]){
             marker = new google.maps.Marker({
               position: {lat: pokemon.position.Latitude, lng: pokemon.position.Longitude},
               map: map,
@@ -47,21 +46,17 @@
               icon: pokemon.img
             });
 
-            marker.addListener('click', function() {
+            marker.addListener('click', function(e) {
               console.log('Catchiiing');
-              socket.emit('Catch', pokemon.position, function(err, status){
-                if(err){
-                  console.log(err);
-                  return;
-                }
+              socket.emit('Catch', pokemon.position, function(status){
                 console.log('status', status);
                 if(status.code !== 4 || status.code !== 2){
-                  delete pokemon[pokemon.position.Latitude + '' + pokemon.position.Longitude];
-                  map.removeOverlay(marker);
+                  delete pokemons[pokemon.position.Latitude + '' + pokemon.position.Longitude];
+                  marker.setMap(null);
                 }
               });
             });
-            pokemon[pokemon.position.Latitude + '' + pokemon.position.Longitude] = true;
+            pokemons[pokemon.position.Latitude + '' + pokemon.position.Longitude] = true;
           }
         });
       }

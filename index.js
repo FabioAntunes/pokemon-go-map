@@ -7,6 +7,7 @@ var config = require('./config');
 
 app.listen(8903);
 
+console.log('Server running on: http://localhost:8903');
 function handler (req, res) {
   fs.readFile(__dirname + '/index.html',
   function (err, data) {
@@ -63,7 +64,7 @@ io.on('connection', function (socket) {
   						if(hb.cells[i].WildPokemon[0]) {
   							var iSpawnz = hb.cells[i].WildPokemon[0];
                   Pokeio.EncounterPokemon(iSpawnz, function(j,ax) {
-                    if(ax.WildPokemon){
+                    if(ax){
                       var pokemon = Pokeio.pokemonlist[parseInt(ax.WildPokemon.pokemon.PokemonId)-1];
                       pokemon.position = ax.WildPokemon;
                       socket.emit('Pokemon', pokemon);
