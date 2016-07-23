@@ -25,17 +25,22 @@
       function initMap() {
         socket = io('http://localhost:8903');
         var myLatLng = {lat: 51.508772, lng: -0.047605};
+        var user;
         map = new google.maps.Map(document.getElementById('map'), {
           center: myLatLng,
           zoom: 16
         });
 
+        socket.emit('UserPosition', null, function (coords) {
+          var position = {lat: coords.latitude, lng: coords.longitude};
+          map.setCenter(position);
+          user = new google.maps.Marker({
+            position: position,
+            map: map,
+            title: 'Me!'
+          });
+        })
 
-        var user = new google.maps.Marker({
-          position: myLatLng,
-          map: map,
-          title: 'Me!'
-        });
 
         map.addListener('click', function(event) {
           user.setPosition(event.latLng);
@@ -74,7 +79,13 @@
               });
             });
             pokemons[pokemon.position.Latitude + '' + pokemon.position.Longitude] = true;
+
+            setTimeout(function () {
+              console.log(Date.now());
+              marker.setMap(null);
+            }, pokemon.position.TimeTillHiddenMs)
           }
+
         });
       }
     </script>

@@ -40,7 +40,12 @@ io.on('connection', function (s) {
   socket.on('Position', function (position, cb) {
     Pokeio.SetLocation(position, cb);
   });
+
+  socket.on('UserPosition', function (data, cb) {
+    cb(config.location.coords);
+  });
 });
+
 util.inspect(console, true);
 
 var username = config.username;
@@ -83,11 +88,13 @@ Pokeio.init(username, password, location, provider, function(err) {
             if(hb.cells[i].WildPokemon[0]) {
               var iSpawnz = hb.cells[i].WildPokemon[0];
               Pokeio.EncounterPokemon(iSpawnz, function(j,ax) {
-                if(ax){
+                if(ax && ax.WildPokemon){
                   var pokemon = Pokeio.pokemonlist[parseInt(ax.WildPokemon.pokemon.PokemonId)-1];
                   pokemon.position = ax.WildPokemon;
                   if(socket)
                   socket.emit('Pokemon', pokemon);
+                }else{
+                  console.log(ax);
                 }
               });
             }
