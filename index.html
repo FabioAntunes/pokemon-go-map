@@ -61,6 +61,7 @@
           var marker;
           if(!pokemons[pokemon.position.Latitude + '' + pokemon.position.Longitude]){
             console.log(pokemon);
+            notification(pokemon);
             marker = new google.maps.Marker({
               position: {lat: pokemon.position.Latitude, lng: pokemon.position.Longitude},
               map: map,
@@ -88,6 +89,36 @@
 
         });
       }
+
+      function notification(pokemon) {
+        Notification.requestPermission().then(function(result) {
+          var options = {
+            body: 'It will expire in ' + pokemon.position.TimeTillHiddenMs / 1000 + ' seconds' ,
+            icon: pokemon.img
+          }
+          var n = new Notification('A wild ' + pokemon.name + ' appeared', options);
+        });
+      }
+      // function notification(pokemon) {
+      //   var opt = {
+      //     type: "basic",
+      //     title: "Primary Title",
+      //     message: "Primary message to display",
+      //     iconUrl: "url_to_small_icon"
+      //   }
+      //   if (Notification.permission === 'granted') {
+      //     var notification = new Notification(pokemon);
+      //   } else if (Notification.permission !== 'denied') {
+      //     Notification.requestPermission(function (permission) {
+      //       if(!('permission' in Notification)) {
+      //         Notification.permission = permission;
+      //       }
+      //       if (permission === 'granted') {
+      //         var notification = new Notification(pokemon);
+      //       }
+      //     });
+      //   }
+      // }
     </script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBWazNGb6jPK8BrPQYnGuSN_Ck6TZEHaOU&callback=initMap"
     async defer></script>
