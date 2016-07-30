@@ -1,17 +1,18 @@
-var app = require('http').createServer(handler);
-var io = require('socket.io')(app);
-var fs = require('fs');
-var Pokeio = require('pokemon-go-node-api');
-var util = require('util');
-var config = require('./config');
-var socket;
+const app = require('http').createServer(handler);
+const config = require('./config');
+const io = require('socket.io')(app);
+const fs = require('fs');
+const Pokego = require('pokemon-go-node-api/pokego');
+const PokegoService = require('./services/pokego-service');
+const util = require('util');
+let socket;
+let shouldLoop = true;
 
 app.listen(8903);
 
 console.log('Server running on: http://localhost:8903');
 function handler (req, res) {
-  fs.readFile(__dirname + '/index.html',
-  function (err, data) {
+  fs.readFile(__dirname + '/index.html', (err, data) => {
     if (err) {
       res.writeHead(500);
       return res.end('Error loading index.html');
@@ -22,88 +23,80 @@ function handler (req, res) {
   });
 }
 
-io.on('connection', function (s) {
+io.on('connection', s => {
   socket = s;
 
-  socket.on('Catch', function (pokemon, cb) {
-    var useBall = 1; // ITEM_POKE_BALL = 1; ITEM_GREAT_BALL = 2; ITEM_ULTRA_BALL = 3; ITEM_MASTER_BALL = 4;
-    Pokeio.CatchPokemon(pokemon, useBall, function (a, b) {
-      var status = ['Unexpected error', 'Successful catch', 'Catch Escape', 'Catch Flee', 'Missed Catch'];
-      console.log('Catch status for ' + pokemon + ': ' + status[b.status]);
+  socket.on('Catch', (pokemon, cb) => {
+    Pokego.EncounterPokemon(pokemon.position).then((data) => {
+      console.log('EncounterPokemon', data);
+      return Pokego.CatchPokemon(data.WildPokemon, config.pokeball);
+    }).then((final) => {
+      const status = ['Unexpected error', 'Successful catch', 'Catch Escape', 'Catch Flee', 'Missed Catch'];
+      if (final.Status === null) {
+        console.log('[x] Error: You have no more of that ball left to use!');
+      } else {
+        console.log('[s] Catch status for ' + pokemon.name + ': ' + status[parseInt(final.Status)]);
+      }
       cb({
-        code: b.status,
-        text: status[b.status]
+        code: final.Status,
+        text: status[parseInt(final.Status, 10)]
       });
+      return final;
+    }).catch((err) => {
+      console.log(err);
     });
   });
 
-  socket.on('Position', function (position, cb) {
-    Pokeio.SetLocation(position, cb);
+  socket.on('Position', (position, cb) => {
+    Pokego.SetLocation(position).then(coords => {
+      cb(null, coords);
+    }).catch(err => {
+      console.log(err);
+      cb(err);
+    });
   });
 
-  socket.on('UserPosition', function (data, cb) {
+  socket.on('Inventory', (position, cb) => {
+    Pokego.GetInventory().then(inventory => {
+      cb(null, PokegoService.parseInventory(inventory));
+    }).catch(err => {
+      console.log(err);
+      cb(err);
+    });
+  });
+
+  socket.on('UserPosition', (data, cb) => {
     cb(config.location.coords);
   });
 });
 
 util.inspect(console, true);
+Pokego.init(config.username, config.password, config.location, config.provider).then(apiEndpoint => {
+  let repeatCount = 1;
+  Pokego.GetProfile().then((profile) => Pokego.formatPlayercard(profile)).then(() => {
+    setInterval(() => {
+      if (shouldLoop) {
+        Pokego.Heartbeat().then((heart) => {
+          console.log('[o] pump' + '.'.repeat(repeatCount));
+          repeatCount++;
+          repeatCount = repeatCount > 3 ? 1 : repeatCount;
+          heart.cells.map(cell => {
+            if (cell.WildPokemon[0]) {
+              shouldLoop = false;
 
-var username = config.username;
-var password = config.password;
-var provider = config.provider;
+              cell.WildPokemon.reverse().map(pokemonCell => {
+                const pokemon = Pokego.pokemonlist[parseInt(pokemonCell.pokemon.PokemonId, 10) - 1];
+                pokemon.position = pokemonCell;
 
-var location = config.location;
-
-
-Pokeio.init(username, password, location, provider, function(err) {
-
-  console.log('[i] Current location: ' + Pokeio.playerInfo.locationName);
-
-  console.log('[i] lat/long/alt: : ' + Pokeio.playerInfo.latitude + ' ' + Pokeio.playerInfo.longitude + ' ' + Pokeio.playerInfo.altitude);
-
-  Pokeio.GetProfile(function(err, profile) {
-    if (err) throw err;
-
-    console.log('[i] Username: ' + profile.username);
-    console.log('[i] Poke Storage: ' + profile.poke_storage);
-    console.log('[i] Item Storage: ' + profile.item_storage);
-
-    var poke = 0;
-    if (profile.currency[0].amount) {
-      poke = profile.currency[0].amount;
-    }
-
-    console.log('[i] Pokecoin: ' + poke);
-    console.log('[i] Stardust: ' + profile.currency[1].amount);
-
-    setInterval(function() {
-      // This will let you know the heartbeat is pumping..
-      console.log('pump...');
-      Pokeio.Heartbeat(function(a,hb) {
-        if(a !== null) {
-          console.log('There appeared to be an error...');
-        } else {
-          for (var i = hb.cells.length - 1; i >= 0; i--) {
-
-            if(hb.cells[i].WildPokemon[0]) {
-              var iSpawnz = hb.cells[i].WildPokemon[0];
-              Pokeio.EncounterPokemon(iSpawnz, function(j,ax) {
-                if(ax && ax.WildPokemon){
-                  var pokemon = Pokeio.pokemonlist[parseInt(ax.WildPokemon.pokemon.PokemonId)-1];
-                  pokemon.position = ax.WildPokemon;
-                  if(socket)
-                  socket.emit('Pokemon', pokemon);
-                }else{
-                  console.log(ax);
-                }
+                if (socket) socket.emit('Pokemon', pokemon);
+                shouldLoop = true;
               });
             }
-          }
-          // console.log(util.inspect(hb, showHidden=false, depth=10, colorize=true));
-        }
-      });
+          });
+        }).catch((err) => { console.log(err); });
+      } else {
+        console.log('[p] Looping stalled to complete execution of task..');
+      }
     }, 2000);
-
-  });
-
-});
+  }).catch(err => console.log(err));
+}).catch(err => console.log(err));
