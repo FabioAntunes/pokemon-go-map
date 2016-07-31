@@ -39,7 +39,15 @@
             map: map,
             title: 'Me!'
           });
-        })
+        });
+
+        socket.emit('Inventory', null, function (err, inventory) {
+          if (err) {
+            console.log(err);
+            return;
+          }
+          console.log(inventory)
+        });
 
 
         map.addListener('click', function(event) {
@@ -52,7 +60,10 @@
               altitude: 0
             }
           }, function(err, coords) {
-            console.log('Error', err);
+            if (err) {
+              console.log(err);
+              return;
+            }
             console.log('Coords', coords);
           })
         });
@@ -71,7 +82,7 @@
 
             marker.addListener('click', function(e) {
               console.log('Catchiiing');
-              socket.emit('Catch', pokemon.position, function(status){
+              socket.emit('Catch', pokemon, function(status){
                 console.log('status', status);
                 if(status.code !== 4 || status.code !== 2){
                   delete pokemons[pokemon.position.Latitude + '' + pokemon.position.Longitude];
@@ -99,26 +110,6 @@
           var n = new Notification('A wild ' + pokemon.name + ' appeared', options);
         });
       }
-      // function notification(pokemon) {
-      //   var opt = {
-      //     type: "basic",
-      //     title: "Primary Title",
-      //     message: "Primary message to display",
-      //     iconUrl: "url_to_small_icon"
-      //   }
-      //   if (Notification.permission === 'granted') {
-      //     var notification = new Notification(pokemon);
-      //   } else if (Notification.permission !== 'denied') {
-      //     Notification.requestPermission(function (permission) {
-      //       if(!('permission' in Notification)) {
-      //         Notification.permission = permission;
-      //       }
-      //       if (permission === 'granted') {
-      //         var notification = new Notification(pokemon);
-      //       }
-      //     });
-      //   }
-      // }
     </script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBWazNGb6jPK8BrPQYnGuSN_Ck6TZEHaOU&callback=initMap"
     async defer></script>
