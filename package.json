@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm run server & npm run dev",
+    "server": "node index.js",
+    "dev": "node_modules/.bin/webpack-dev-server --progresss"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +15,19 @@
   "dependencies": {
     "dotenv": "^2.0.0",
     "pokemon-go-node-api": "d-pollard/Pokemon-GO-node-api",
+    "react-google-maps": "^4.11.0",
     "socket.io": "^1.4.8"
+  },
+  "devDependencies": {
+    "babel-core": "^6.11.4",
+    "babel-loader": "^6.2.4",
+    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-react": "^6.11.1",
+    "babel-preset-stage-0": "^6.5.0",
+    "react": "^15.3.0",
+    "react-dom": "^15.3.0",
+    "react-hot-loader": "^3.0.0-beta.1",
+    "webpack": "^1.13.1",
+    "webpack-dev-server": "^1.14.1"
   }
 }

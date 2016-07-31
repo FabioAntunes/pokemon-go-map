@@ -1,117 +1,12 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <title></title>
-    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
-    <meta name="viewport" content="initial-scale=1.0">
-    <style>
-      html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-      }
-      #map {
-        height: 100%;
-      }
-    </style>
+    <title>Pokemon GO Desktop</title>
   </head>
   <body>
-    <div id="map"></div>
-    <script>
-      var map;
-      var socket;
-      var pokemons = {};
-      function initMap() {
-        socket = io('http://localhost:8903');
-        var myLatLng = {lat: 51.508772, lng: -0.047605};
-        var user;
-        map = new google.maps.Map(document.getElementById('map'), {
-          center: myLatLng,
-          zoom: 16
-        });
-
-        socket.emit('UserPosition', null, function (coords) {
-          var position = {lat: coords.latitude, lng: coords.longitude};
-          map.setCenter(position);
-          user = new google.maps.Marker({
-            position: position,
-            map: map,
-            title: 'Me!'
-          });
-        });
-
-        socket.emit('Inventory', null, function (err, inventory) {
-          if (err) {
-            console.log(err);
-            return;
-          }
-          console.log(inventory)
-        });
-
-
-        map.addListener('click', function(event) {
-          user.setPosition(event.latLng);
-          socket.emit('Position', {
-            type: 'coords',
-            coords: {
-              latitude: event.latLng.lat(),
-              longitude: event.latLng.lng(),
-              altitude: 0
-            }
-          }, function(err, coords) {
-            if (err) {
-              console.log(err);
-              return;
-            }
-            console.log('Coords', coords);
-          })
-        });
-
-        socket.on('Pokemon', function (pokemon) {
-          var marker;
-          if(!pokemons[pokemon.position.Latitude + '' + pokemon.position.Longitude]){
-            console.log(pokemon);
-            notification(pokemon);
-            marker = new google.maps.Marker({
-              position: {lat: pokemon.position.Latitude, lng: pokemon.position.Longitude},
-              map: map,
-              title: pokemon.name,
-              icon: pokemon.img
-            });
-
-            marker.addListener('click', function(e) {
-              console.log('Catchiiing');
-              socket.emit('Catch', pokemon, function(status){
-                console.log('status', status);
-                if(status.code !== 4 || status.code !== 2){
-                  delete pokemons[pokemon.position.Latitude + '' + pokemon.position.Longitude];
-                  marker.setMap(null);
-                }
-              });
-            });
-            pokemons[pokemon.position.Latitude + '' + pokemon.position.Longitude] = true;
-
-            setTimeout(function () {
-              console.log(Date.now());
-              marker.setMap(null);
-            }, pokemon.position.TimeTillHiddenMs)
-          }
-
-        });
-      }
-
-      function notification(pokemon) {
-        Notification.requestPermission().then(function(result) {
-          var options = {
-            body: 'It will expire in ' + pokemon.position.TimeTillHiddenMs / 1000 + ' seconds' ,
-            icon: pokemon.img
-          }
-          var n = new Notification('A wild ' + pokemon.name + ' appeared', options);
-        });
-      }
-    </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBWazNGb6jPK8BrPQYnGuSN_Ck6TZEHaOU&callback=initMap"
+    <div id='root'></div>
+    <script src="/static/bundle.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBWazNGb6jPK8BrPQYnGuSN_Ck6TZEHaOU"
     async defer></script>
   </body>
 </html>
